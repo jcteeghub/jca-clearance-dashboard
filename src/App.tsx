@@ -10,12 +10,12 @@ const supabase = createClient(
 const CSS = `
   * { box-sizing: border-box; }
   body { margin: 0; font-family: sans-serif; }
-  body { background: #741513; color: #fff5ca; }
-  .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 1px solid #5a1010; border-radius: 8px; background: #8b1a17; box-shadow: 0 2px 12px rgba(0,0,0,0.3); color: #fff5ca; }
+  body { background: #751413; color: #fff5ca; }
+  .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 1px solid #7a2220; border-radius: 8px; background: #9c3533; box-shadow: 0 2px 12px rgba(0,0,0,0.3); color: #fff5ca; }
   .login-box input { background: #fff; color: #333; }
   .dash { max-width: 1200px; margin: 0 auto; padding: 24px; }
-  .card { border: 1px solid #5a1010; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #8b1a17; box-shadow: 0 1px 4px rgba(0,0,0,0.2); color: #fff5ca; }
-  .tabs { display: flex; gap: 0; border-bottom: 2px solid #5a1010; margin-bottom: 20px; flex-wrap: wrap; }
+  .card { border: 1px solid #7a2220; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #9c3533; box-shadow: 0 1px 4px rgba(0,0,0,0.2); color: #fff5ca; }
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid #7a2220; margin-bottom: 20px; flex-wrap: wrap; }
   .tab { padding: 10px 18px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: rgba(255,245,202,0.6); border-bottom: 3px solid transparent; margin-bottom: -2px; }
   .tab.on { color: #fff5ca; border-bottom-color: #fff5ca; }
   .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
@@ -28,8 +28,8 @@ const CSS = `
   .dl { font-weight: 600; color: rgba(255,245,202,0.7); font-size: 13px; }
   .dv { font-size: 13px; color: #fff5ca; }
   .ct { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
-  .ct th, .ct td { border: 1px solid #5a1010; padding: 5px 8px; text-align: left; color: #fff5ca; }
-  .ct th { background: #5a1010; font-weight: 600; color: #fff5ca; }
+  .ct th, .ct td { border: 1px solid #7a2220; padding: 5px 8px; text-align: left; color: #fff5ca; }
+  .ct th { background: #7a2220; font-weight: 600; color: #fff5ca; }
   .ab { padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; margin-right: 6px; }
   .ab:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-g { background: #10b981; color: white; }
@@ -37,13 +37,13 @@ const CSS = `
   .btn-b { background: #fff5ca; color: #741513; }
   .btn-y { background: #f59e0b; color: white; }
   .btn-purple { background: #7c3aed; color: white; }
-  .ri { width: 100%; padding: 6px 8px; border: 1px solid #5a1010; border-radius: 4px; font-size: 13px; resize: vertical; min-height: 45px; margin-top: 4px; background: #fff; color: #333; }
-  .sec-t { font-size: 17px; font-weight: 700; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #5a1010; color: #fff5ca; }
+  .ri { width: 100%; padding: 6px 8px; border: 1px solid #7a2220; border-radius: 4px; font-size: 13px; resize: vertical; min-height: 45px; margin-top: 4px; background: #fff; color: #333; }
+  .sec-t { font-size: 17px; font-weight: 700; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #7a2220; color: #fff5ca; }
   .mbar { height: 22px; border-radius: 4px; }
   .filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
   .filter-row input, .filter-row select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: #fff; color: #333; }
-  .mini-metrics { display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 16px; border: 1px solid #5a1010; border-radius: 8px; overflow: hidden; }
-  .mini-m { text-align: center; padding: 8px 14px; border-right: 1px solid #5a1010; flex: 1; min-width: 80px; }
+  .mini-metrics { display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 16px; border: 1px solid #7a2220; border-radius: 8px; overflow: hidden; }
+  .mini-m { text-align: center; padding: 8px 14px; border-right: 1px solid #7a2220; flex: 1; min-width: 80px; }
   .mini-m:last-child { border-right: none; }
   .mini-m .num { font-size: 20px; font-weight: 700; color: #f59e0b; }
   .mini-m .lbl { font-size: 10px; color: rgba(255,245,202,0.6); }
