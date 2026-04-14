@@ -10,15 +10,15 @@ const supabase = createClient(
 const CSS = `
   * { box-sizing: border-box; }
   body { margin: 0; font-family: sans-serif; }
-  body { background: linear-gradient(180deg, #8a2a28 0%, #751413 40%, #751413 100%); background-attachment: fixed; color: #fff5ca; min-height: 100vh; }
-  .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 1px solid #d4a84a; border-radius: 8px; background: #fff5ca; box-shadow: 0 2px 12px rgba(0,0,0,0.3); color: #333; }
+  body { background: #f8ca8f; color: #751413; }
+  .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 1px solid #751413; border-radius: 8px; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.1); color: #333; }
   .login-box input { background: #fff; color: #333; }
   .login-box label { color: #751413; }
   .dash { max-width: 1200px; margin: 0 auto; padding: 24px; }
-  .card { border: 1px solid #d4a84a; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff5ca; box-shadow: 0 1px 4px rgba(0,0,0,0.2); color: #333; }
-  .tabs { display: flex; gap: 0; border-bottom: 2px solid #d4a84a; margin-bottom: 20px; flex-wrap: wrap; }
-  .tab { padding: 10px 18px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: rgba(255,245,202,0.6); border-bottom: 3px solid transparent; margin-bottom: -2px; }
-  .tab.on { color: #fff5ca; border-bottom-color: #fff5ca; }
+  .card { border: 1px solid #751413; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); color: #333; }
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid #751413; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #999; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+  .tab.on { color: #751413; border-bottom-color: #751413; }
   .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
   .b-pend { background: #fef3c7; color: #92400e; }
   .b-appr { background: #d1fae5; color: #065f46; }
@@ -29,22 +29,22 @@ const CSS = `
   .dl { font-weight: 600; color: #751413; font-size: 13px; }
   .dv { font-size: 13px; color: #333; }
   .ct { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
-  .ct th, .ct td { border: 1px solid #d4a84a; padding: 5px 8px; text-align: left; color: #333; }
-  .ct th { background: #751413; font-weight: 600; color: #fff5ca; }
+  .ct th, .ct td { border: 1px solid #ddd; padding: 5px 8px; text-align: left; color: #333; }
+  .ct th { background: #751413; font-weight: 600; color: #fff; }
   .ab { padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; margin-right: 6px; }
   .ab:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-g { background: #10b981; color: white; }
   .btn-r { background: #ef4444; color: white; }
-  .btn-b { background: #751413; color: #fff5ca; }
+  .btn-b { background: #751413; color: #fff; }
   .btn-y { background: #f59e0b; color: white; }
   .btn-purple { background: #7c3aed; color: white; }
   .ri { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; resize: vertical; min-height: 45px; margin-top: 4px; background: #fff; color: #333; }
-  .sec-t { font-size: 17px; font-weight: 700; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid rgba(255,245,202,0.3); color: #fff5ca; }
+  .sec-t { font-size: 17px; font-weight: 700; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #751413; color: #751413; }
   .mbar { height: 22px; border-radius: 4px; }
   .filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-  .filter-row input, .filter-row select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: #fff; color: #333; }
-  .mini-metrics { display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 16px; border: 1px solid #d4a84a; border-radius: 8px; overflow: hidden; background: #fff5ca; }
-  .mini-m { text-align: center; padding: 8px 14px; border-right: 1px solid #d4a84a; flex: 1; min-width: 80px; }
+  .filter-row input, .filter-row select { padding: 6px 8px; border: 1px solid #751413; border-radius: 4px; font-size: 13px; background: #fff; color: #333; }
+  .mini-metrics { display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 16px; border: 1px solid #751413; border-radius: 8px; overflow: hidden; background: #fff; }
+  .mini-m { text-align: center; padding: 8px 14px; border-right: 1px solid #ddd; flex: 1; min-width: 80px; }
   .mini-m:last-child { border-right: none; }
   .mini-m .num { font-size: 20px; font-weight: 700; color: #751413; }
   .mini-m .lbl { font-size: 10px; color: #666; }
@@ -560,11 +560,11 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         <option value="">All Levels</option>
         {allGrades.map((g) => <option key={g} value={g}>{g}</option>)}
       </select>
-      <label style={{ fontSize: 12, color: "#fff5ca" }}>From:</label>
+      <label style={{ fontSize: 12, color: "#751413" }}>From:</label>
       <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} />
-      <label style={{ fontSize: 12, color: "#fff5ca" }}>To:</label>
+      <label style={{ fontSize: 12, color: "#751413" }}>To:</label>
       <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} />
-      <label style={{ fontSize: 12, color: "#fff5ca" }}>Sort:</label>
+      <label style={{ fontSize: 12, color: "#751413" }}>Sort:</label>
       <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
         <option value="name">Name (A-Z)</option>
         <option value="date">Date Filed (Newest)</option>
@@ -1407,14 +1407,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         {/* HEADER */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: "#fff5ca" }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: "#751413" }}>
               {isRegistrar ? "Registrar Dashboard" : isAdmissions ? "Admissions Dashboard" : isAcadAffairs ? "Academic Affairs Dashboard" : "Clearance Dashboard"}
             </h1>
-            <div style={{ fontSize: 12, color: "rgba(255,245,202,0.7)", marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: "#751413", opacity: 0.7, marginTop: 2 }}>
               {user.email} — <strong>{user.department}</strong>
-              {isRegistrar && <span style={{ color: "rgba(255,245,202,0.5)" }}> (Transfer & LOA)</span>}
-              {isAdmissions && <span style={{ color: "rgba(255,245,202,0.5)" }}> (Shift to Homeschool / In-school)</span>}
-              {isAcadAffairs && <span style={{ color: "rgba(255,245,202,0.5)" }}> (Shift — Final Approval)</span>}
+              {isRegistrar && <span style={{ opacity: 0.6 }}> (Transfer & LOA)</span>}
+              {isAdmissions && <span style={{ opacity: 0.6 }}> (Shift to Homeschool / In-school)</span>}
+              {isAcadAffairs && <span style={{ opacity: 0.6 }}> (Shift — Final Approval)</span>}
             </div>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
@@ -1443,7 +1443,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 {renderPendingMini()}
                 {renderFilters()}
                 <div className="sec-t">Pending Clearances ({filtered(adminPending).length})</div>
-                {filtered(adminPending).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>No pending submissions.</p>}
+                {filtered(adminPending).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>No pending submissions.</p>}
                 {filtered(adminPending).map((s) => renderAdminCard(s, "pending"))}
               </>
             )}
@@ -1451,7 +1451,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <>
                 {renderFilters()}
                 <div className="sec-t">Disapproved — Needs Attention ({filtered(adminDisapproved).length})</div>
-                {filtered(adminDisapproved).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>None.</p>}
+                {filtered(adminDisapproved).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
                 {filtered(adminDisapproved).map((s) => renderAdminCard(s, "pending"))}
               </>
             )}
@@ -1459,7 +1459,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <>
                 {renderFilters()}
                 <div className="sec-t">Fully Approved — Ready for Release ({filtered(adminApproved).length})</div>
-                {filtered(adminApproved).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>None.</p>}
+                {filtered(adminApproved).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
                 {filtered(adminApproved).map((s) => renderAdminCard(s, "approved"))}
               </>
             )}
@@ -1467,7 +1467,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <>
                 {renderFilters()}
                 <div className="sec-t">Completed / Archive ({filtered(adminCompleted).length})</div>
-                {filtered(adminCompleted).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>None.</p>}
+                {filtered(adminCompleted).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
                 {filtered(adminCompleted).map((s) => renderAdminCard(s, "completed"))}
               </>
             )}
@@ -1475,7 +1475,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <>
                 {renderFilters()}
                 <div className="sec-t">Did Not Push Through ({filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).length})</div>
-                {filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>None.</p>}
+                {filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
                 {filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).map((s) => renderAdminCard(s, "dnp"))}
               </>
             )}
@@ -1497,14 +1497,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             {tab === "pending" && (
               <>
                 {renderFilters()}
-                {filtered(deptPending).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>No pending clearances.</p>}
+                {filtered(deptPending).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>No pending clearances.</p>}
                 {filtered(deptPending).map((s) => renderDeptCard(s, true))}
               </>
             )}
             {tab === "reviewed" && (
               <>
                 {renderFilters()}
-                {filtered(deptReviewed).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>None.</p>}
+                {filtered(deptReviewed).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
                 {filtered(deptReviewed).map((s) => renderDeptCard(s, false))}
               </>
             )}
