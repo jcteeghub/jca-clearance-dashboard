@@ -668,6 +668,31 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               </button>
             )}
 
+            {/* Ping pending departments */}
+            {(isRegistrar || isAdmissions) && (() => {
+              const pendingClrs = getClrs(sub.id).filter((c) => c.status === "pending");
+              if (pendingClrs.length === 0) return null;
+              const pendingDepts = pendingClrs.map((c) => c.department);
+              return (
+                <button className="ab" style={{ background: "#f59e0b", color: "white", fontSize: 12, padding: "4px 12px", marginBottom: 8 }}
+                  onClick={async () => {
+                    const { data: deptUsers } = await supabase.from("department_users").select("email, department").in("department", pendingDepts);
+                    const emails = (deptUsers || []).map((u: any) => u.email);
+                    if (!emails.length) { alert("No department emails found."); return; }
+                    const studentName = `${d.first_name} ${d.last_name}`;
+                    const grade = d.grade || "";
+                    const refNo = d.ref_number || "N/A";
+                    const subject = encodeURIComponent(`Reminder: Pending Clearance – ${studentName} (${grade})`);
+                    const body = encodeURIComponent(
+                      `This is a friendly reminder that the clearance for the following student is still pending your approval:\n\nStudent: ${studentName}\nGrade/Level: ${grade}\nReference #: ${refNo}\nApplication Type: ${d.application_type || ""}\n\nKindly log in to the Clearance Dashboard and process the request at your earliest convenience.\n\nThank you.`
+                    );
+                    window.open(`mailto:${emails.join(",")}?subject=${subject}&body=${body}`, "_blank");
+                  }}>
+                  🔔 Ping Pending Departments ({pendingDepts.length})
+                </button>
+              );
+            })()}
+
             {/* All admin roles see the clearance table */}
             {renderClrTable(sub.id)}
 
