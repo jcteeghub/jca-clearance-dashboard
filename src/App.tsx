@@ -8,8 +8,9 @@ const supabase = createClient(
 
 // ── CSS ──
 const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: sans-serif; }
+  body { margin: 0; font-family: 'Montserrat', sans-serif; }
   body { background: #fff5ca; color: #5f110e; }
   .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 1px solid #751413; border-radius: 8px; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.1); color: #333; }
   .login-box input { background: #fff; color: #333; }
