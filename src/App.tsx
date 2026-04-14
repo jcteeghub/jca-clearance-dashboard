@@ -10,7 +10,7 @@ const supabase = createClient(
 const CSS = `
   * { box-sizing: border-box; }
   body { margin: 0; font-family: sans-serif; }
-  body { background: #751413; color: #fff5ca; }
+  body { background: linear-gradient(180deg, #8a2a28 0%, #751413 40%, #751413 100%); background-attachment: fixed; color: #fff5ca; min-height: 100vh; }
   .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 1px solid #d4a84a; border-radius: 8px; background: #fff5ca; box-shadow: 0 2px 12px rgba(0,0,0,0.3); color: #333; }
   .login-box input { background: #fff; color: #333; }
   .login-box label { color: #751413; }
@@ -614,12 +614,12 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     return (
       <div onClick={() => toggleExpand(sub.id)}
         style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "10px 14px", background: bgColor, border: `${allCleared ? "2px" : "1px"} solid ${borderColor}`, borderRadius: isOpen ? "8px 8px 0 0" : 8, marginBottom: isOpen ? 0 : 8, userSelect: "none", flexWrap: "wrap" }}>
-        <span style={{ fontSize: 16, color: "#888", flexShrink: 0 }}>{isOpen ? "▼" : "▶"}</span>
+        <span style={{ fontSize: 16, color: "#999", flexShrink: 0 }}>{isOpen ? "▼" : "▶"}</span>
         {allCleared && <span style={{ fontSize: 11, background: "#10b981", color: "white", padding: "2px 8px", borderRadius: 4, fontWeight: 700, flexShrink: 0 }}>READY</span>}
         {d.ref_number && <span style={{ fontWeight: 700, color: "#1e3a8a", fontSize: 12, letterSpacing: 1, background: "#eff6ff", padding: "2px 8px", borderRadius: 4, flexShrink: 0 }}>{d.ref_number}</span>}
-        <span style={{ fontWeight: 600, fontSize: 14 }}>{d.last_name}, {d.first_name}</span>
+        <span style={{ fontWeight: 600, fontSize: 14, color: "#333" }}>{d.last_name}, {d.first_name}</span>
         <span style={{ fontSize: 12, color: "#666" }}>{d.grade}</span>
-        <span style={{ fontSize: 11, color: "#888" }}>{d.application_type}</span>
+        <span style={{ fontSize: 11, color: "#777" }}>{d.application_type}</span>
         {total > 0 && <span style={{ fontSize: 11, color: approved === total ? "#10b981" : "#f59e0b", fontWeight: 600, marginLeft: "auto" }}>{approved}/{total} cleared</span>}
         <span className={`badge ${badgeClass(sub.status)}`} style={{ fontSize: 11 }}>{sub.status}</span>
         {extra}
