@@ -10,15 +10,15 @@ const supabase = createClient(
 const CSS = `
   * { box-sizing: border-box; }
   body { margin: 0; font-family: sans-serif; }
-  body { background: #fff5ca; color: #4a0d0c; }
-  .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 2px solid #751413; border-radius: 8px; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.1); color: #333; }
+  body { background: #fff5ca; color: #5f110e; }
+  .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 1px solid #751413; border-radius: 8px; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.1); color: #333; }
   .login-box input { background: #fff; color: #333; }
   .login-box label { color: #751413; }
   .dash { max-width: 1200px; margin: 0 auto; padding: 24px; }
-  .card { border: 2px solid #751413; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); color: #333; }
+  .card { border: 1px solid #751413; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); color: #333; }
   .tabs { display: flex; gap: 0; border-bottom: 2px solid #751413; margin-bottom: 20px; flex-wrap: wrap; }
   .tab { padding: 10px 18px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #8b6914; border-bottom: 3px solid transparent; margin-bottom: -2px; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-  .tab.on { color: #4a0d0c; border-bottom-color: #751413; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+  .tab.on { color: #5f110e; border-bottom-color: #751413; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
   .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
   .b-pend { background: #fef3c7; color: #92400e; }
   .b-appr { background: #d1fae5; color: #065f46; }
@@ -39,11 +39,11 @@ const CSS = `
   .btn-y { background: #f59e0b; color: white; }
   .btn-purple { background: #7c3aed; color: white; }
   .ri { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; resize: vertical; min-height: 45px; margin-top: 4px; background: #fff; color: #333; }
-  .sec-t { font-size: 17px; font-weight: 700; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #751413; color: #4a0d0c; text-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+  .sec-t { font-size: 17px; font-weight: 700; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #751413; color: #5f110e; text-shadow: 0 1px 2px rgba(0,0,0,0.12); }
   .mbar { height: 22px; border-radius: 4px; }
   .filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-  .filter-row input, .filter-row select { padding: 6px 8px; border: 2px solid #751413; border-radius: 4px; font-size: 13px; background: #fff; color: #333; }
-  .mini-metrics { display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 16px; border: 2px solid #751413; border-radius: 8px; overflow: hidden; background: #fff; }
+  .filter-row input, .filter-row select { padding: 6px 8px; border: 1px solid #751413; border-radius: 4px; font-size: 13px; background: #fff; color: #333; }
+  .mini-metrics { display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 16px; border: 1px solid #751413; border-radius: 8px; overflow: hidden; background: #fff; }
   .mini-m { text-align: center; padding: 8px 14px; border-right: 1px solid #ddd; flex: 1; min-width: 80px; }
   .mini-m:last-child { border-right: none; }
   .mini-m .num { font-size: 20px; font-weight: 700; color: #751413; }
@@ -560,11 +560,11 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         <option value="">All Levels</option>
         {allGrades.map((g) => <option key={g} value={g}>{g}</option>)}
       </select>
-      <label style={{ fontSize: 12, color: "#4a0d0c", fontWeight: 600, textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>From:</label>
+      <label style={{ fontSize: 12, color: "#5f110e", fontWeight: 600, textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>From:</label>
       <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} />
-      <label style={{ fontSize: 12, color: "#4a0d0c", fontWeight: 600, textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>To:</label>
+      <label style={{ fontSize: 12, color: "#5f110e", fontWeight: 600, textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>To:</label>
       <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} />
-      <label style={{ fontSize: 12, color: "#4a0d0c", fontWeight: 600, textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>Sort:</label>
+      <label style={{ fontSize: 12, color: "#5f110e", fontWeight: 600, textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>Sort:</label>
       <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
         <option value="name">Name (A-Z)</option>
         <option value="date">Date Filed (Newest)</option>
@@ -1407,10 +1407,10 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         {/* HEADER */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: "#4a0d0c", textShadow: "0 1px 2px rgba(0,0,0,0.12)" }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: "#5f110e", textShadow: "0 1px 2px rgba(0,0,0,0.12)" }}>
               {isRegistrar ? "Registrar Dashboard" : isAdmissions ? "Admissions Dashboard" : isAcadAffairs ? "Academic Affairs Dashboard" : "Clearance Dashboard"}
             </h1>
-            <div style={{ fontSize: 12, color: "#4a0d0c", opacity: 0.8, marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: "#5f110e", opacity: 0.8, marginTop: 2 }}>
               {user.email} — <strong>{user.department}</strong>
               {isRegistrar && <span style={{ opacity: 0.6 }}> (Transfer & LOA)</span>}
               {isAdmissions && <span style={{ opacity: 0.6 }}> (Shift to Homeschool / In-school)</span>}
