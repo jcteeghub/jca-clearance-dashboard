@@ -160,6 +160,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [filterDateTo, setFilterDateTo] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "date" | "ref">("name");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  // Dept report filters
+  const [deptReportName, setDeptReportName] = useState("");
+  const [deptReportLevel, setDeptReportLevel] = useState("");
   // Manual entry state
   const [manualData, setManualData] = useState<Record<string, any>>({ reasons: [], application_type: "Transfer to Another School" });
   // Category state
@@ -458,6 +461,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
       <span className="dv">{d.last_name}, {d.first_name} {d.middle_name || ""}</span>
       <span className="dl">Grade / Level:</span><span className="dv">{d.grade}</span>
       {d.email && <><span className="dl">Email:</span><span className="dv">{d.email}</span></>}
+      {d.phone && <><span className="dl">Phone:</span><span className="dv">{d.phone}</span></>}
       <span className="dl">Application:</span><span className="dv">{d.application_type}{d.manual_entry ? " (Manual)" : ""}</span>
       <span className="dl">Date Filed:</span><span className="dv">{d.date_filed}</span>
       <span className="dl">School Year:</span><span className="dv">{d.school_year}</span>
@@ -744,10 +748,26 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               </div>
             )}
             {section === "completed" && (
-              <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <span className="badge b-comp">COMPLETED</span>
                 {(isRegistrar || (isAdmissions && subIsShift)) && (
                   <button className="ab btn-purple" style={{ fontSize: 12, padding: "4px 12px" }} onClick={() => handleAnnounce(sub)}>Announce to Departments</button>
+                )}
+                {(isRegistrar || isAdmissions) && d.email && (
+                  <button className="ab btn-g" style={{ fontSize: 12, padding: "4px 12px" }}
+                    onClick={() => {
+                      const studentName = `${d.first_name} ${d.last_name}`;
+                      const grade = d.grade || "";
+                      const refNo = d.ref_number || "N/A";
+                      const appType = d.application_type || "";
+                      const subject = encodeURIComponent(`Clearance Completed – ${studentName} (Ref: ${refNo})`);
+                      const body = encodeURIComponent(
+                        `Dear Parent/Guardian,\n\nWe are pleased to inform you that the ${appType} application for ${studentName} of ${grade} has been completely processed.\n\nReference #: ${refNo}\n\nYou may now proceed to the school office to claim the necessary documents.\n\nThank you.\n\nJubilee Christian Academy`
+                      );
+                      window.open(`mailto:${d.email}?subject=${subject}&body=${body}`, "_blank");
+                    }}>
+                    ✉ Notify Applicant — Completed
+                  </button>
                 )}
               </div>
             )}
@@ -1389,12 +1409,33 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     const now = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Manila" });
     // Show only students where this department had a clearance
     const myCompletedSubs = deptSubs.filter((s) => s.status === "completed" || s.status === "did_not_push_through");
-    const activeSubs = myCompletedSubs.filter((s) => s.status === "completed");
+    let activeSubs = myCompletedSubs.filter((s) => s.status === "completed");
+    // Apply dept report filters
+    if (deptReportName) {
+      const q = deptReportName.toLowerCase();
+      activeSubs = activeSubs.filter((s) => (s.data?.last_name || "").toLowerCase().includes(q) || (s.data?.first_name || "").toLowerCase().includes(q));
+    }
+    if (deptReportLevel) {
+      activeSubs = activeSubs.filter((s) => (s.data?.grade || "") === deptReportLevel);
+    }
+    // Unique grades for filter dropdown
+    const deptGrades = [...new Set(myCompletedSubs.map((s) => s.data?.grade || "").filter(Boolean))].sort();
     return (
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div className="sec-t" style={{ margin: 0, color: "#751413", borderBottomColor: "#d4a84a" }}>{user.department} — Clearance Report</div>
           <button className="ab btn-b" style={{ fontSize: 12 }} onClick={() => window.print()}>Print / Export PDF</button>
+        </div>
+        {/* Search & Filter */}
+        <div className="filter-row" style={{ marginBottom: 12 }}>
+          <input placeholder="Search name..." value={deptReportName} onChange={(e) => setDeptReportName(e.target.value)} style={{ minWidth: 160 }} />
+          <select value={deptReportLevel} onChange={(e) => setDeptReportLevel(e.target.value)}>
+            <option value="">All Levels</option>
+            {deptGrades.map((g) => <option key={g} value={g}>{g}</option>)}
+          </select>
+          {(deptReportName || deptReportLevel) && (
+            <button className="ab" style={{ background: "#6b7280", color: "white", fontSize: 12 }} onClick={() => { setDeptReportName(""); setDeptReportLevel(""); }}>Clear</button>
+          )}
         </div>
         <div id="report-area" className="card" style={{ padding: 24 }}>
           <div style={{ textAlign: "center", marginBottom: 16 }}>
@@ -1402,10 +1443,11 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             <h3 style={{ margin: "4px 0", fontSize: 15, fontWeight: 600 }}>{user.department} Department — Clearance Report</h3>
             <div style={{ fontSize: 12, color: "#666" }}>As of {now}</div>
           </div>
+          <div style={{ fontSize: 13, marginBottom: 12, color: "#555" }}>Showing {activeSubs.length} record(s)</div>
           <table className="ct">
             <thead><tr><th>#</th><th>Student's Name</th><th>Level</th><th>Status</th></tr></thead>
             <tbody>
-              {activeSubs.length === 0 && <tr><td colSpan={4} style={{ textAlign: "center", color: "#999" }}>No completed records yet.</td></tr>}
+              {activeSubs.length === 0 && <tr><td colSpan={4} style={{ textAlign: "center", color: "#999" }}>No records found.</td></tr>}
               {applySorting(activeSubs).map((s, i) => {
                 const mc2 = myClr(s.id);
                 return (
