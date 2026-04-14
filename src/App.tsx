@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import React, { useState, useEffect, type CSSProperties } from "react";
+import React, { useState, useEffect, CSSProperties } from "react";
 
 const supabase = createClient(
   "https://dsomamtpsjqljkrgrtfs.supabase.co",
@@ -10,17 +10,19 @@ const supabase = createClient(
 const CSS = `
   * { box-sizing: border-box; }
   body { margin: 0; font-family: sans-serif; }
-  .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 1px solid #ccc; border-radius: 8px; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  body { background: #fff5ca; }
+  .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 1px solid #d4a84a; border-radius: 8px; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
   .dash { max-width: 1200px; margin: 0 auto; padding: 24px; }
   .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
   .tabs { display: flex; gap: 0; border-bottom: 2px solid #ddd; margin-bottom: 20px; flex-wrap: wrap; }
   .tab { padding: 10px 18px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; border-bottom: 3px solid transparent; margin-bottom: -2px; }
-  .tab.on { color: #2563eb; border-bottom-color: #2563eb; }
+  .tab.on { color: #741513; border-bottom-color: #741513; }
   .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
   .b-pend { background: #fef3c7; color: #92400e; }
   .b-appr { background: #d1fae5; color: #065f46; }
   .b-dis { background: #fee2e2; color: #991b1b; }
   .b-comp { background: #dbeafe; color: #1e40af; }
+  .b-dnp { background: #f3f4f6; color: #6b7280; }
   .dg { display: grid; grid-template-columns: 160px 1fr; gap: 4px 12px; margin-bottom: 12px; }
   .dl { font-weight: 600; color: #555; font-size: 13px; }
   .dv { font-size: 13px; }
@@ -31,7 +33,7 @@ const CSS = `
   .ab:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-g { background: #10b981; color: white; }
   .btn-r { background: #ef4444; color: white; }
-  .btn-b { background: #2563eb; color: white; }
+  .btn-b { background: #741513; color: white; }
   .btn-y { background: #f59e0b; color: white; }
   .btn-purple { background: #7c3aed; color: white; }
   .ri { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; resize: vertical; min-height: 45px; margin-top: 4px; }
@@ -69,7 +71,9 @@ type Clr = { id: string; submission_id: string; department: string; status: stri
 type Cat = { id: string; parent_reason: string; category_name: string };
 type User = { department: string; email: string };
 
+const SUPPORT = ["Finance", "PAGS", "ERC", "Guidance", "Clinic"];
 const PRINCIPALS = ["Preschool", "Primary", "Intermediate", "Junior High School", "Senior High School", "Homeschool"];
+const SHIFT_ROLES = ["Admissions", "Academic Affairs"];
 const inp: CSSProperties = { width: "100%", padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4, fontSize: 13 };
 
 // ── Helpers ──
@@ -93,7 +97,7 @@ const parseLevel = (grade: string) => {
   return { level: grade, isHS };
 };
 
-const badgeClass = (s: string) => s === "approved" ? "b-appr" : s === "disapproved" ? "b-dis" : s === "completed" ? "b-comp" : "b-pend";
+const badgeClass = (s: string) => s === "approved" ? "b-appr" : s === "disapproved" ? "b-dis" : s === "completed" ? "b-comp" : s === "did_not_push_through" ? "b-dnp" : "b-pend";
 
 const isTransferLOA = (t: string) => t === "Transfer to Another School" || t === "Leave of Absence";
 const isShiftType = (t: string) => t === "Shift to Jubilee Homeschool" || t === "Shift to Jubilee In-school";
@@ -121,8 +125,8 @@ function Login({ onLogin }: { onLogin: (u: User) => void }) {
       <style>{CSS}</style>
       <div className="login-box">
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Jubilee Christian Academy</h1>
-          <h2 style={{ fontSize: 15, fontWeight: 600, margin: "4px 0 0", color: "#555" }}>Clearance Dashboard</h2>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "#741513" }}>Jubilee Christian Academy</h1>
+          <h2 style={{ fontSize: 15, fontWeight: 600, margin: "4px 0 0", color: "#741513" }}>Clearance Dashboard</h2>
         </div>
         <label style={{ fontWeight: 600, fontSize: 13 }}>Email</label>
         <input type="email" style={{ ...inp, marginBottom: 12 }} placeholder="yourname@jca.edu.ph" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} />
@@ -339,6 +343,12 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     // Delete clearances first (foreign key), then submission
     await supabase.from("clearances").delete().eq("submission_id", sid);
     await supabase.from("submissions").delete().eq("id", sid);
+    fetch_();
+  };
+
+  const handleDidNotPush = async (sid: string) => {
+    if (!window.confirm("Mark this student as 'Did not push through'? They will be removed from metrics and reports.")) return;
+    await supabase.from("submissions").update({ status: "did_not_push_through" }).eq("id", sid);
     fetch_();
   };
 
@@ -619,8 +629,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const renderAdminCard = (sub: Sub, section: string) => {
     const d = sub.data;
     const subIsShift = isShiftType(d.application_type || "");
-    const _isHSDept = (d.grade || "").toLowerCase().includes("homeschool");
-    void _isHSDept;
+    const isHSDept = (d.grade || "").toLowerCase().includes("homeschool");
     const isOpen = expanded[sub.id];
 
     // For Admissions / Academic Affairs — find their own clearance
@@ -631,7 +640,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     const subClrs = getClrs(sub.id);
     const principalApproved = subClrs.some((c) => PRINCIPALS.includes(c.department) && c.status === "approved");
     const admissionsApproved = subClrs.some((c) => c.department === "Admissions" && c.status === "approved");
-    void principalApproved; void admissionsApproved;
+    const canAcadAct = principalApproved && admissionsApproved;
 
     return (
       <div key={sub.id} style={{ marginBottom: 4 }}>
@@ -717,8 +726,11 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
             {/* Delete (Registrar / Admissions only) */}
             {(isRegistrar || isAdmissions) && (
-              <div style={{ marginTop: 10, borderTop: "1px solid #eee", paddingTop: 8, textAlign: "right" }}>
-                <button className="ab btn-r" style={{ fontSize: 11, padding: "3px 10px", opacity: 0.7 }} onClick={() => handleDelete(sub.id)}>Delete Entry</button>
+              <div style={{ marginTop: 10, borderTop: "1px solid #eee", paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                {sub.status !== "did_not_push_through" && sub.status !== "completed" && (
+                  <button className="ab" style={{ fontSize: 11, padding: "3px 10px", background: "#6b7280", color: "white" }} onClick={() => handleDidNotPush(sub.id)}>Did Not Push Through</button>
+                )}
+                <button className="ab btn-r" style={{ fontSize: 11, padding: "3px 10px", opacity: 0.7, marginLeft: "auto" }} onClick={() => handleDelete(sub.id)}>Delete Entry</button>
               </div>
             )}
           </div>
@@ -735,7 +747,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   // Admission result state
   const [admissionResult, setAdmissionResult] = useState<Record<string, string>>({});
 
-  const handleEndorseAction = async (cid: string, action: "approved" | "disapproved", _subData: Record<string, any>) => {
+  const handleEndorseAction = async (cid: string, action: "approved" | "disapproved", subData: Record<string, any>) => {
     const name = reviewerNames[cid] || "";
     if (!name.trim()) { alert("Please enter the name of the approver."); return; }
 
@@ -1046,15 +1058,16 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   // ── Render: Metrics ──
   const renderMetrics = () => {
-    // Use roleSubs for role-specific metrics
-    const total = roleSubs.length;
+    // Exclude "did not push through" from metrics
+    const metricSubs = roleSubs.filter((s) => s.status !== "did_not_push_through");
+    const total = metricSubs.length;
     const byType: Record<string, number> = {};
     const byStatus = { pending: 0, completed: 0 };
     const transferReasons: Record<string, number> = {};
     const shiftReasons: Record<string, number> = {};
     const levelMap: Record<string, { inschool: number; homeschool: number }> = {};
 
-    roleSubs.forEach((s) => {
+    metricSubs.forEach((s) => {
       const d = s.data;
       const type = d.application_type || "Unknown";
       byType[type] = (byType[type] || 0) + 1;
@@ -1094,7 +1107,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
     // Count per-submission reason tags for sub-category metrics
     const tagCounts: Record<string, Record<string, number>> = {}; // { "Health Reasons": { "Physical": 2, "Mental": 1 } }
-    roleSubs.forEach((s) => {
+    metricSubs.forEach((s) => {
       const tags: Record<string, string> = s.data?.reason_tags || {};
       Object.entries(tags).forEach(([reason, cat]) => {
         if (!cat) return;
@@ -1205,15 +1218,17 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   // ── Render: Report ──
   const renderReport = () => {
     const now = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Manila" });
+    // Exclude "did not push through" from report
+    const reportSubs = roleSubs.filter((s) => s.status !== "did_not_push_through");
     const byType: Record<string, Sub[]> = {};
-    roleSubs.forEach((s) => {
+    reportSubs.forEach((s) => {
       const t = s.data?.application_type || "Unknown";
       if (!byType[t]) byType[t] = [];
       byType[t].push(s);
     });
     const reasonCounts: Record<string, number> = {};
     const tagCountsR: Record<string, Record<string, number>> = {};
-    roleSubs.forEach((s) => {
+    reportSubs.forEach((s) => {
       const reasons: string[] = s.data?.reasons || [];
       const tags: Record<string, string> = s.data?.reason_tags || {};
       reasons.forEach((r) => {
@@ -1250,9 +1265,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           <table className="ct" style={{ marginBottom: 16 }}>
             <thead><tr><th>Metric</th><th style={{ textAlign: "right" }}>Count</th></tr></thead>
             <tbody>
-              <tr><td>Total Submissions</td><td style={{ textAlign: "right", fontWeight: 700 }}>{roleSubs.length}</td></tr>
-              <tr><td>Pending</td><td style={{ textAlign: "right", fontWeight: 700, color: "#f59e0b" }}>{roleSubs.filter((s) => s.status === "pending").length}</td></tr>
-              <tr><td>Completed</td><td style={{ textAlign: "right", fontWeight: 700, color: "#10b981" }}>{roleSubs.filter((s) => s.status === "completed").length}</td></tr>
+              <tr><td>Total Submissions</td><td style={{ textAlign: "right", fontWeight: 700 }}>{reportSubs.length}</td></tr>
+              <tr><td>Pending</td><td style={{ textAlign: "right", fontWeight: 700, color: "#f59e0b" }}>{reportSubs.filter((s) => s.status === "pending").length}</td></tr>
+              <tr><td>Completed</td><td style={{ textAlign: "right", fontWeight: 700, color: "#10b981" }}>{reportSubs.filter((s) => s.status === "completed").length}</td></tr>
             </tbody>
           </table>
 
@@ -1272,7 +1287,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {(() => {
             const lvlOrder = ["Toddler", "Nursery", "Kinder", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
             const lvlMap: Record<string, { inschool: number; homeschool: number }> = {};
-            roleSubs.forEach((s) => {
+            reportSubs.forEach((s) => {
               const { level, isHS } = parseLevel(s.data?.grade || "");
               if (!lvlMap[level]) lvlMap[level] = { inschool: 0, homeschool: 0 };
               if (isHS) lvlMap[level].homeschool++; else lvlMap[level].inschool++;
@@ -1324,7 +1339,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           <table className="ct">
             <thead><tr><th>Ref #</th><th>Name</th><th>Grade</th><th>Type</th><th>Date Filed</th><th>Status</th></tr></thead>
             <tbody>
-              {applySorting(roleSubs).map((s) => (
+              {applySorting(reportSubs).map((s) => (
                 <tr key={s.id}>
                   <td style={{ fontWeight: 600, color: "#1e3a8a", fontSize: 11, letterSpacing: 1 }}>{s.data?.ref_number || "—"}</td>
                   <td>{s.data?.last_name}, {s.data?.first_name}</td>
@@ -1341,6 +1356,46 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     );
   };
 
+  // ── Render: Department Report (completed students only) ──
+  const renderDeptReport = () => {
+    const now = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Manila" });
+    // Show only students where this department had a clearance
+    const myCompletedSubs = deptSubs.filter((s) => s.status === "completed" || s.status === "did_not_push_through");
+    const activeSubs = myCompletedSubs.filter((s) => s.status === "completed");
+    return (
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div className="sec-t" style={{ margin: 0 }}>{user.department} — Clearance Report</div>
+          <button className="ab btn-b" style={{ fontSize: 12 }} onClick={() => window.print()}>Print / Export PDF</button>
+        </div>
+        <div id="report-area" className="card" style={{ padding: 24 }}>
+          <div style={{ textAlign: "center", marginBottom: 16 }}>
+            <h2 style={{ margin: 0, fontSize: 18, color: "#741513" }}>Jubilee Christian Academy</h2>
+            <h3 style={{ margin: "4px 0", fontSize: 15, fontWeight: 600 }}>{user.department} Department — Clearance Report</h3>
+            <div style={{ fontSize: 12, color: "#666" }}>As of {now}</div>
+          </div>
+          <table className="ct">
+            <thead><tr><th>#</th><th>Student's Name</th><th>Level</th><th>Status</th></tr></thead>
+            <tbody>
+              {activeSubs.length === 0 && <tr><td colSpan={4} style={{ textAlign: "center", color: "#999" }}>No completed records yet.</td></tr>}
+              {applySorting(activeSubs).map((s, i) => {
+                const mc2 = myClr(s.id);
+                return (
+                  <tr key={s.id}>
+                    <td>{i + 1}</td>
+                    <td>{s.data?.last_name}, {s.data?.first_name} {s.data?.middle_name || ""}</td>
+                    <td>{s.data?.grade}</td>
+                    <td><span className={`badge ${badgeClass(mc2?.status || "pending")}`}>{mc2?.status || "pending"}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) return <><style>{CSS}</style><div style={{ textAlign: "center", padding: 60, fontSize: 16 }}>Loading...</div></>;
 
   return (
@@ -1350,7 +1405,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         {/* HEADER */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: "#741513" }}>
               {isRegistrar ? "Registrar Dashboard" : isAdmissions ? "Admissions Dashboard" : isAcadAffairs ? "Academic Affairs Dashboard" : "Clearance Dashboard"}
             </h1>
             <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
@@ -1374,6 +1429,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <button className={`tab ${tab === "disapproved" ? "on" : ""}`} onClick={() => setTab("disapproved")}>Disapproved ({adminDisapproved.length})</button>
               <button className={`tab ${tab === "approved" ? "on" : ""}`} onClick={() => setTab("approved")}>Fully Approved ({adminApproved.length})</button>
               <button className={`tab ${tab === "completed" ? "on" : ""}`} onClick={() => setTab("completed")}>Completed ({adminCompleted.length})</button>
+              {(isRegistrar || isAdmissions) && <button className={`tab ${tab === "dnp" ? "on" : ""}`} onClick={() => setTab("dnp")}>Did Not Push Through ({roleSubs.filter((s) => s.status === "did_not_push_through").length})</button>}
               <button className={`tab ${tab === "metrics" ? "on" : ""}`} onClick={() => setTab("metrics")}>Metrics</button>
               {(isRegistrar || isAdmissions) && <button className={`tab ${tab === "manual" ? "on" : ""}`} onClick={() => setTab("manual")}>Manual Entry</button>}
               {(isRegistrar || isAdmissions) && <button className={`tab ${tab === "categories" ? "on" : ""}`} onClick={() => setTab("categories")}>Categories</button>}
@@ -1413,6 +1469,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 {filtered(adminCompleted).map((s) => renderAdminCard(s, "completed"))}
               </>
             )}
+            {tab === "dnp" && (isRegistrar || isAdmissions) && (
+              <>
+                {renderFilters()}
+                <div className="sec-t">Did Not Push Through ({filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).length})</div>
+                {filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
+                {filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).map((s) => renderAdminCard(s, "dnp"))}
+              </>
+            )}
             {tab === "metrics" && renderMetrics()}
             {tab === "manual" && (isRegistrar || isAdmissions) && renderManualEntry()}
             {tab === "categories" && (isRegistrar || isAdmissions) && renderCategories()}
@@ -1426,6 +1490,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             <div className="tabs">
               <button className={`tab ${tab === "pending" ? "on" : ""}`} onClick={() => setTab("pending")}>Pending ({deptPending.length})</button>
               <button className={`tab ${tab === "reviewed" ? "on" : ""}`} onClick={() => setTab("reviewed")}>Reviewed ({deptReviewed.length})</button>
+              <button className={`tab ${tab === "deptreport" ? "on" : ""}`} onClick={() => setTab("deptreport")}>Report</button>
             </div>
             {tab === "pending" && (
               <>
@@ -1441,6 +1506,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 {filtered(deptReviewed).map((s) => renderDeptCard(s, false))}
               </>
             )}
+            {tab === "deptreport" && renderDeptReport()}
           </>
         )}
       </div>
