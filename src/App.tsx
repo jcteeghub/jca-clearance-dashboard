@@ -10,8 +10,8 @@ const supabase = createClient(
 const CSS = `
   * { box-sizing: border-box; }
   body { margin: 0; font-family: sans-serif; }
-  body { background: #f8ca8f; color: #751413; }
-  .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 1px solid #751413; border-radius: 8px; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.1); color: #333; }
+  body { background: #fff5ca; color: #751413; }
+  .login-box { max-width: 400px; margin: 80px auto; padding: 32px; border: 2px solid #751413; border-radius: 8px; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.1); color: #333; }
   .login-box input { background: #fff; color: #333; }
   .login-box label { color: #751413; }
   .dash { max-width: 1200px; margin: 0 auto; padding: 24px; }
