@@ -15,7 +15,7 @@ const CSS = `
   .login-box input { background: #fff; color: #333; }
   .login-box label { color: #751413; }
   .dash { max-width: 1200px; margin: 0 auto; padding: 24px; }
-  .card { border: 2px solid #751413; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); color: #333; }
+  .card { border: 1px solid #751413; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); color: #333; }
   .tabs { display: flex; gap: 0; border-bottom: 2px solid #751413; margin-bottom: 20px; flex-wrap: wrap; }
   .tab { padding: 10px 18px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #999; border-bottom: 3px solid transparent; margin-bottom: -2px; }
   .tab.on { color: #751413; border-bottom-color: #751413; }
