@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import React, { useState, useEffect, CSSProperties } from "react";
+import React, { useState, useEffect, type CSSProperties } from "react";
 
 const supabase = createClient(
   "https://dsomamtpsjqljkrgrtfs.supabase.co",
