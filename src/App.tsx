@@ -39,14 +39,14 @@ const CSS = `
   .btn-y { background: #f59e0b; color: white; }
   .btn-purple { background: #7c3aed; color: white; }
   .ri { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; resize: vertical; min-height: 45px; margin-top: 4px; background: #fff; color: #333; }
-  .sec-t { font-size: 17px; font-weight: 700; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #d4a84a; color: #751413; }
+  .sec-t { font-size: 17px; font-weight: 700; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid rgba(255,245,202,0.3); color: #fff5ca; }
   .mbar { height: 22px; border-radius: 4px; }
   .filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
   .filter-row input, .filter-row select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: #fff; color: #333; }
-  .mini-metrics { display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 16px; border: 1px solid #d4a84a; border-radius: 8px; overflow: hidden; }
+  .mini-metrics { display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 16px; border: 1px solid #d4a84a; border-radius: 8px; overflow: hidden; background: #fff5ca; }
   .mini-m { text-align: center; padding: 8px 14px; border-right: 1px solid #d4a84a; flex: 1; min-width: 80px; }
   .mini-m:last-child { border-right: none; }
-  .mini-m .num { font-size: 20px; font-weight: 700; color: #f59e0b; }
+  .mini-m .num { font-size: 20px; font-weight: 700; color: #751413; }
   .mini-m .lbl { font-size: 10px; color: #666; }
   .clr-stmt { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #065f46; font-style: italic; margin-top: 10px; }
   @media print {
@@ -127,8 +127,8 @@ function Login({ onLogin }: { onLogin: (u: User) => void }) {
       <style>{CSS}</style>
       <div className="login-box">
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "#fff5ca" }}>Jubilee Christian Academy</h1>
-          <h2 style={{ fontSize: 15, fontWeight: 600, margin: "4px 0 0", color: "#fff5ca" }}>Clearance Dashboard</h2>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "#751413" }}>Jubilee Christian Academy</h1>
+          <h2 style={{ fontSize: 15, fontWeight: 600, margin: "4px 0 0", color: "#751413" }}>Clearance Dashboard</h2>
         </div>
         <label style={{ fontWeight: 600, fontSize: 13 }}>Email</label>
         <input type="email" style={{ ...inp, marginBottom: 12 }} placeholder="yourname@jca.edu.ph" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} />
@@ -560,11 +560,11 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         <option value="">All Levels</option>
         {allGrades.map((g) => <option key={g} value={g}>{g}</option>)}
       </select>
-      <label style={{ fontSize: 12 }}>From:</label>
+      <label style={{ fontSize: 12, color: "#fff5ca" }}>From:</label>
       <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} />
-      <label style={{ fontSize: 12 }}>To:</label>
+      <label style={{ fontSize: 12, color: "#fff5ca" }}>To:</label>
       <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} />
-      <label style={{ fontSize: 12 }}>Sort:</label>
+      <label style={{ fontSize: 12, color: "#fff5ca" }}>Sort:</label>
       <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
         <option value="name">Name (A-Z)</option>
         <option value="date">Date Filed (Newest)</option>
@@ -943,7 +943,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   const renderManualEntry = () => (
     <div>
-      <div className="sec-t">Manual Entry — Students who left without filing</div>
+      <div className="sec-t" style={{ color: "#751413", borderBottomColor: "#d4a84a" }}>Manual Entry — Students who left without filing</div>
       <div className="card">
         <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 140 }}>
@@ -1015,7 +1015,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   const renderCategories = () => (
     <div>
-      <div className="sec-t">Sub-Answer Categories</div>
+      <div className="sec-t" style={{ color: "#751413", borderBottomColor: "#d4a84a" }}>Sub-Answer Categories</div>
       <div className="card">
         <p style={{ fontSize: 13, color: "#666", marginTop: 0 }}>
           {isAdmissions
@@ -1251,7 +1251,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     return (
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div className="sec-t" style={{ margin: 0 }}>Live Report</div>
+          <div className="sec-t" style={{ margin: 0, color: "#751413", borderBottomColor: "#d4a84a" }}>Live Report</div>
           <button className="ab btn-b" style={{ fontSize: 12 }} onClick={() => window.print()}>Print / Export PDF</button>
         </div>
         <div id="report-area" className="card" style={{ padding: 24 }}>
@@ -1367,7 +1367,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     return (
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div className="sec-t" style={{ margin: 0 }}>{user.department} — Clearance Report</div>
+          <div className="sec-t" style={{ margin: 0, color: "#751413", borderBottomColor: "#d4a84a" }}>{user.department} — Clearance Report</div>
           <button className="ab btn-b" style={{ fontSize: 12 }} onClick={() => window.print()}>Print / Export PDF</button>
         </div>
         <div id="report-area" className="card" style={{ padding: 24 }}>
@@ -1407,14 +1407,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         {/* HEADER */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: "#751413" }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: "#fff5ca" }}>
               {isRegistrar ? "Registrar Dashboard" : isAdmissions ? "Admissions Dashboard" : isAcadAffairs ? "Academic Affairs Dashboard" : "Clearance Dashboard"}
             </h1>
-            <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: "rgba(255,245,202,0.7)", marginTop: 2 }}>
               {user.email} — <strong>{user.department}</strong>
-              {isRegistrar && <span style={{ color: "#888" }}> (Transfer & LOA)</span>}
-              {isAdmissions && <span style={{ color: "#888" }}> (Shift to Homeschool / In-school)</span>}
-              {isAcadAffairs && <span style={{ color: "#888" }}> (Shift — Final Approval)</span>}
+              {isRegistrar && <span style={{ color: "rgba(255,245,202,0.5)" }}> (Transfer & LOA)</span>}
+              {isAdmissions && <span style={{ color: "rgba(255,245,202,0.5)" }}> (Shift to Homeschool / In-school)</span>}
+              {isAcadAffairs && <span style={{ color: "rgba(255,245,202,0.5)" }}> (Shift — Final Approval)</span>}
             </div>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
@@ -1443,7 +1443,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 {renderPendingMini()}
                 {renderFilters()}
                 <div className="sec-t">Pending Clearances ({filtered(adminPending).length})</div>
-                {filtered(adminPending).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>No pending submissions.</p>}
+                {filtered(adminPending).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>No pending submissions.</p>}
                 {filtered(adminPending).map((s) => renderAdminCard(s, "pending"))}
               </>
             )}
@@ -1451,7 +1451,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <>
                 {renderFilters()}
                 <div className="sec-t">Disapproved — Needs Attention ({filtered(adminDisapproved).length})</div>
-                {filtered(adminDisapproved).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
+                {filtered(adminDisapproved).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>None.</p>}
                 {filtered(adminDisapproved).map((s) => renderAdminCard(s, "pending"))}
               </>
             )}
@@ -1459,7 +1459,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <>
                 {renderFilters()}
                 <div className="sec-t">Fully Approved — Ready for Release ({filtered(adminApproved).length})</div>
-                {filtered(adminApproved).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
+                {filtered(adminApproved).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>None.</p>}
                 {filtered(adminApproved).map((s) => renderAdminCard(s, "approved"))}
               </>
             )}
@@ -1467,7 +1467,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <>
                 {renderFilters()}
                 <div className="sec-t">Completed / Archive ({filtered(adminCompleted).length})</div>
-                {filtered(adminCompleted).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
+                {filtered(adminCompleted).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>None.</p>}
                 {filtered(adminCompleted).map((s) => renderAdminCard(s, "completed"))}
               </>
             )}
@@ -1475,7 +1475,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <>
                 {renderFilters()}
                 <div className="sec-t">Did Not Push Through ({filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).length})</div>
-                {filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
+                {filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>None.</p>}
                 {filtered(roleSubs.filter((s) => s.status === "did_not_push_through")).map((s) => renderAdminCard(s, "dnp"))}
               </>
             )}
@@ -1497,14 +1497,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             {tab === "pending" && (
               <>
                 {renderFilters()}
-                {filtered(deptPending).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>No pending clearances.</p>}
+                {filtered(deptPending).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>No pending clearances.</p>}
                 {filtered(deptPending).map((s) => renderDeptCard(s, true))}
               </>
             )}
             {tab === "reviewed" && (
               <>
                 {renderFilters()}
-                {filtered(deptReviewed).length === 0 && <p style={{ color: "#999", fontSize: 14 }}>None.</p>}
+                {filtered(deptReviewed).length === 0 && <p style={{ color: "rgba(255,245,202,0.5)", fontSize: 14 }}>None.</p>}
                 {filtered(deptReviewed).map((s) => renderDeptCard(s, false))}
               </>
             )}
