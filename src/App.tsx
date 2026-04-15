@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import React, { useState, useEffect, type CSSProperties } from "react";
+import bcrypt from "bcryptjs";
 
 const supabase = createClient(
   "https://dsomamtpsjqljkrgrtfs.supabase.co",
@@ -118,8 +119,13 @@ function Login({ onLogin }: { onLogin: (u: User) => void }) {
     setErr("");
     if (!email || !pw) { setErr("Please enter email and password."); return; }
     setBusy(true);
-    const { data, error } = await supabase.from("department_users").select("department, email").eq("email", email.trim().toLowerCase()).eq("password", pw).single();
+    // Fetch user by email (password checked via bcrypt or plain-text fallback)
+    const { data, error } = await supabase.from("department_users").select("department, email, password").eq("email", email.trim().toLowerCase()).single();
     if (error || !data) { setErr("Invalid email or password."); setBusy(false); return; }
+    // Support both hashed (bcrypt) and legacy plain-text passwords
+    const isHashed = data.password.startsWith("$2");
+    const match = isHashed ? await bcrypt.compare(pw, data.password) : pw === data.password;
+    if (!match) { setErr("Invalid email or password."); setBusy(false); return; }
     onLogin({ department: data.department, email: data.email });
   };
 
@@ -163,17 +169,22 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   // Dept report filters
   const [deptReportName, setDeptReportName] = useState("");
   const [deptReportLevel, setDeptReportLevel] = useState("");
+  // Account management (Super Admin)
+  const [accounts, setAccounts] = useState<{ id: string; department: string; email: string }[]>([]);
+  const [resetPw, setResetPw] = useState<Record<string, string>>({});
+  const [resetMsg, setResetMsg] = useState<Record<string, string>>({});
   // Manual entry state
   const [manualData, setManualData] = useState<Record<string, any>>({ reasons: [], application_type: "Transfer to Another School" });
   // Category state
   const [newCatParent, setNewCatParent] = useState("");
   const [newCatName, setNewCatName] = useState("");
 
-  const isRegistrar = user.department === "Registrar";
-  const isAdmissions = user.department === "Admissions";
-  const isAcadAffairs = user.department === "Academic Affairs";
+  const isSuperAdmin = user.department === "Admin";
+  const isRegistrar = user.department === "Registrar" || isSuperAdmin;
+  const isAdmissions = user.department === "Admissions" || isSuperAdmin;
+  const isAcadAffairs = user.department === "Academic Affairs" || isSuperAdmin;
   const isAdmin = isRegistrar || isAdmissions || isAcadAffairs;
-  const isPrincipal = PRINCIPALS.includes(user.department);
+  const isPrincipal = PRINCIPALS.includes(user.department) || isSuperAdmin;
 
   const fetch_ = async () => {
     const [r1, r2, r3] = await Promise.all([
@@ -200,6 +211,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   // Academic Affairs: only Shift where BOTH principal AND admissions have approved
   const roleSubs = subs.filter((s) => {
     const t = s.data?.application_type || "";
+    if (isSuperAdmin) return true; // Super Admin sees everything
     if (isRegistrar) return isTransferLOA(t);
     if (isAdmissions) return isShiftType(t);
     if (isAcadAffairs) {
@@ -1304,7 +1316,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <h2 style={{ margin: 0, fontSize: 18, color: "#751413" }}>Jubilee Christian Academy</h2>
             <h3 style={{ margin: "4px 0", fontSize: 15, fontWeight: 600 }}>
-              {isRegistrar ? "Transfer & LOA Report" : "Shift Applications Report"}
+              {isSuperAdmin ? "All Applications Report" : user.department === "Registrar" ? "Transfer & LOA Report" : "Shift Applications Report"}
             </h3>
             <div style={{ fontSize: 12, color: "#666" }}>As of {now} — Live Data</div>
           </div>
@@ -1466,6 +1478,47 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     );
   };
 
+  // ── Render: Manage Accounts (Super Admin only) ──
+  const loadAccounts = async () => {
+    const { data } = await supabase.from("department_users").select("id, department, email");
+    if (data) setAccounts(data);
+  };
+  const handleResetPassword = async (id: string, dept: string) => {
+    const newPw = resetPw[id]?.trim();
+    if (!newPw || newPw.length < 6) { setResetMsg((p) => ({ ...p, [id]: "Password must be at least 6 characters." })); return; }
+    const hashed = await bcrypt.hash(newPw, 10);
+    const { error } = await supabase.from("department_users").update({ password: hashed }).eq("id", id);
+    if (error) { setResetMsg((p) => ({ ...p, [id]: "Error: " + error.message })); return; }
+    setResetMsg((p) => ({ ...p, [id]: `✅ Password updated for ${dept}` }));
+    setResetPw((p) => ({ ...p, [id]: "" }));
+  };
+  const renderManageAccounts = () => {
+    if (accounts.length === 0) loadAccounts();
+    return (
+      <div>
+        <div className="sec-t" style={{ color: "#751413", borderBottomColor: "#d4a84a" }}>Manage Department Accounts</div>
+        <p style={{ fontSize: 13, color: "#555", marginBottom: 16 }}>Reset passwords for any department. Passwords are securely hashed before storing.</p>
+        <div style={{ display: "grid", gap: 12 }}>
+          {accounts.sort((a, b) => a.department.localeCompare(b.department)).map((acc) => (
+            <div key={acc.id} className="card" style={{ padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
+                <div>
+                  <strong style={{ fontSize: 14, color: "#751413" }}>{acc.department}</strong>
+                  <div style={{ fontSize: 12, color: "#666" }}>{acc.email}</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <input type="password" placeholder="New password (min 6 chars)" style={{ ...inp, flex: 1, minWidth: 180 }} value={resetPw[acc.id] || ""} onChange={(e) => setResetPw((p) => ({ ...p, [acc.id]: e.target.value }))} />
+                <button className="ab btn-b" style={{ fontSize: 12, whiteSpace: "nowrap" }} onClick={() => handleResetPassword(acc.id, acc.department)}>Reset Password</button>
+              </div>
+              {resetMsg[acc.id] && <div style={{ fontSize: 12, marginTop: 6, color: resetMsg[acc.id].startsWith("✅") ? "#10b981" : "#ef4444" }}>{resetMsg[acc.id]}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   if (loading) return <><style>{CSS}</style><div style={{ textAlign: "center", padding: 60, fontSize: 16 }}>Loading...</div></>;
 
   return (
@@ -1476,13 +1529,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: "#5f110e", textShadow: "0 1px 2px rgba(0,0,0,0.12)" }}>
-              {isRegistrar ? "Registrar Dashboard" : isAdmissions ? "Admissions Dashboard" : isAcadAffairs ? "Academic Affairs Dashboard" : "Clearance Dashboard"}
+              {isSuperAdmin ? "Admin Dashboard" : user.department === "Registrar" ? "Registrar Dashboard" : user.department === "Admissions" ? "Admissions Dashboard" : user.department === "Academic Affairs" ? "Academic Affairs Dashboard" : "Clearance Dashboard"}
             </h1>
             <div style={{ fontSize: 12, color: "#5f110e", opacity: 0.8, marginTop: 2 }}>
               {user.email} — <strong>{user.department}</strong>
-              {isRegistrar && <span style={{ opacity: 0.6 }}> (Transfer & LOA)</span>}
-              {isAdmissions && <span style={{ opacity: 0.6 }}> (Shift to Homeschool / In-school)</span>}
-              {isAcadAffairs && <span style={{ opacity: 0.6 }}> (Shift — Final Approval)</span>}
+              {isSuperAdmin && <span style={{ opacity: 0.6 }}> (Full Access — All Departments)</span>}
+              {!isSuperAdmin && user.department === "Registrar" && <span style={{ opacity: 0.6 }}> (Transfer & LOA)</span>}
+              {!isSuperAdmin && user.department === "Admissions" && <span style={{ opacity: 0.6 }}> (Shift to Homeschool / In-school)</span>}
+              {!isSuperAdmin && user.department === "Academic Affairs" && <span style={{ opacity: 0.6 }}> (Shift — Final Approval)</span>}
             </div>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
@@ -1504,6 +1558,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               {(isRegistrar || isAdmissions) && <button className={`tab ${tab === "manual" ? "on" : ""}`} onClick={() => setTab("manual")}>Manual Entry</button>}
               {(isRegistrar || isAdmissions) && <button className={`tab ${tab === "categories" ? "on" : ""}`} onClick={() => setTab("categories")}>Categories</button>}
               {(isRegistrar || isAdmissions) && <button className={`tab ${tab === "report" ? "on" : ""}`} onClick={() => setTab("report")}>Report</button>}
+              {isSuperAdmin && <button className={`tab ${tab === "accounts" ? "on" : ""}`} onClick={() => setTab("accounts")}>Manage Accounts</button>}
             </div>
 
             {tab === "pending" && (
@@ -1551,6 +1606,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             {tab === "manual" && (isRegistrar || isAdmissions) && renderManualEntry()}
             {tab === "categories" && (isRegistrar || isAdmissions) && renderCategories()}
             {tab === "report" && (isRegistrar || isAdmissions) && renderReport()}
+            {tab === "accounts" && isSuperAdmin && renderManageAccounts()}
           </>
         )}
 
