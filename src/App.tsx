@@ -178,6 +178,10 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   // Category state
   const [newCatParent, setNewCatParent] = useState("");
   const [newCatName, setNewCatName] = useState("");
+  // Registrar report state (for principals)
+  const [regEntries, setRegEntries] = useState<{ id: string; student_name: string; level_section: string; report_status: string; remarks: string }[]>([]);
+  const [regLoaded, setRegLoaded] = useState(false);
+  const [regCustomStatus, setRegCustomStatus] = useState("");
 
   const isSuperAdmin = user.department === "Admin";
   const isRegistrar = user.department === "Registrar" || isSuperAdmin;
@@ -210,6 +214,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   // Admissions: only Shift (all shift subs land here)
   // Academic Affairs: only Shift where BOTH principal AND admissions have approved
   const roleSubs = subs.filter((s) => {
+    if (s.data?.report_type === "registrar_report") return false; // Exclude principal reports
     const t = s.data?.application_type || "";
     if (isSuperAdmin) return true; // Super Admin sees everything
     if (isRegistrar) return isTransferLOA(t);
@@ -394,8 +399,12 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     if (!d.last_name?.trim() || !d.first_name?.trim() || !d.grade || d.grade === "Select") {
       alert("Please fill in Name and Grade Level."); return;
     }
+    // Merge non-empty extra reasons into the reasons array
+    const extraReasons = (d.extra_reasons || []).filter((r: string) => r && r.trim());
+    const allReasons = [...(d.reasons || []), ...extraReasons.map((r: string) => r.trim())];
+    const { extra_reasons: _er, ...rest } = d;
     const { error } = await supabase.from("submissions").insert({
-      data: { ...d, manual_entry: true, date_filed: new Date().toISOString().split("T")[0], school_year: "2025-2026" },
+      data: { ...rest, reasons: allReasons, manual_entry: true, date_filed: new Date().toISOString().split("T")[0], school_year: "2025-2026" },
       status: "completed",
     });
     if (error) alert("Error: " + error.message);
@@ -434,6 +443,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     fetch_();
   };
 
+  // ── Tag a school for a submission ──
+  const handleTagSchool = async (subId: string, currentData: Record<string, any>, tag: string) => {
+    const updatedData = { ...currentData, school_tag: tag || undefined };
+    if (!tag) delete updatedData.school_tag;
+    await supabase.from("submissions").update({ data: updatedData }).eq("id", subId);
+    fetch_();
+  };
+
   // ── Render: Reason Tagging (for Registrar / Admissions in admin card) ──
   const renderReasonTags = (sub: Sub) => {
     const d = sub.data;
@@ -461,6 +478,29 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             </div>
           );
         })}
+      </div>
+    );
+  };
+
+  // ── Render: School Tagging (for Registrar / Admissions in admin card) ──
+  const renderSchoolTags = (sub: Sub) => {
+    const d = sub.data;
+    const rawSchool = d.transfer_school || "";
+    if (!rawSchool || !(isRegistrar || isAdmissions)) return null;
+    const schoolCatList = cats.filter((c) => c.parent_reason === "__SCHOOL__");
+    return (
+      <div style={{ marginBottom: 12, padding: 10, background: "#eff6ff", borderRadius: 6, border: "1px solid #bfdbfe" }}>
+        <strong style={{ fontSize: 12, color: "#1e40af" }}>Categorize School:</strong>
+        <p style={{ fontSize: 11, color: "#666", margin: "2px 0 8px" }}>Raw entry: <strong>{rawSchool}</strong>. Assign a canonical school name for metrics.</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <select style={{ ...inp, width: "auto", minWidth: 200, fontSize: 12, padding: "3px 6px" }}
+            value={d.school_tag || ""}
+            onChange={(e) => handleTagSchool(sub.id, d, e.target.value)}>
+            <option value="">— No tag (use raw) —</option>
+            {schoolCatList.map((c) => <option key={c.id} value={c.category_name}>{c.category_name}</option>)}
+          </select>
+          {d.school_tag && <span style={{ fontSize: 11, background: "#dbeafe", color: "#1e40af", padding: "1px 8px", borderRadius: 10, fontWeight: 600 }}>{d.school_tag}</span>}
+        </div>
       </div>
     );
   };
@@ -670,6 +710,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             {renderReasons(d)}
             {renderFollowUp(d)}
             {renderReasonTags(sub)}
+            {renderSchoolTags(sub)}
             {renderLetter(d)}
 
             {/* Send Email to Applicant */}
@@ -1033,6 +1074,11 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             </select>
           </div>
         </div>
+        {/* School to Transfer */}
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ fontWeight: 600, fontSize: 12 }}>School to Transfer To:</label>
+          <input style={{ ...inp, marginTop: 4 }} placeholder="e.g. Ateneo de Manila" value={manualData.transfer_school || ""} onChange={(e) => setManualData((p) => ({ ...p, transfer_school: e.target.value }))} />
+        </div>
         <label style={{ fontWeight: 600, fontSize: 12, marginBottom: 6, display: "block" }}>Reasons (check all that apply):</label>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginBottom: 12 }}>
           {TRANSFER_REASONS.map((r) => (
@@ -1042,7 +1088,19 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             </label>
           ))}
         </div>
-        <div style={{ marginBottom: 12 }}>
+        {/* 5 Quick Reason Boxes */}
+        <label style={{ fontWeight: 600, fontSize: 12, marginBottom: 4, display: "block" }}>Additional Reasons (type in):</label>
+        <p style={{ fontSize: 11, color: "#666", margin: "0 0 6px" }}>Use these boxes to add reasons not listed above. They will be included in metrics.</p>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <input key={i} style={{ ...inp, marginBottom: 4 }} placeholder={`Additional reason ${i + 1}`}
+            value={(manualData.extra_reasons || [])[i] || ""}
+            onChange={(e) => {
+              const cur = [...(manualData.extra_reasons || ["", "", "", "", ""])];
+              cur[i] = e.target.value;
+              setManualData((p) => ({ ...p, extra_reasons: cur }));
+            }} />
+        ))}
+        <div style={{ marginBottom: 12, marginTop: 4 }}>
           <label style={{ fontWeight: 600, fontSize: 12 }}>Other reason:</label>
           <input style={{ ...inp, marginTop: 4 }} value={manualData.other_reasons || ""} onChange={(e) => setManualData((p) => ({ ...p, other_reasons: e.target.value }))} />
         </div>
@@ -1071,7 +1129,20 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   const activeCatReasons = isAdmissions ? ADMISSIONS_CAT_REASONS : REGISTRAR_CAT_REASONS;
 
-  const renderCategories = () => (
+  // School category helpers
+  const [newSchoolName, setNewSchoolName] = useState("");
+  const addSchoolCategory = async () => {
+    if (!newSchoolName.trim()) { alert("Enter a school name."); return; }
+    const exists = cats.some((c) => c.parent_reason === "__SCHOOL__" && c.category_name.toLowerCase() === newSchoolName.trim().toLowerCase());
+    if (exists) { alert("This school already exists."); return; }
+    await supabase.from("reason_categories").insert({ parent_reason: "__SCHOOL__", category_name: newSchoolName.trim(), created_by: user.email });
+    setNewSchoolName("");
+    fetch_();
+  };
+
+  const renderCategories = () => {
+    const schoolCats = cats.filter((c) => c.parent_reason === "__SCHOOL__");
+    return (
     <div>
       <div className="sec-t" style={{ color: "#751413", borderBottomColor: "#d4a84a" }}>Sub-Answer Categories</div>
       <div className="card">
@@ -1113,8 +1184,33 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           );
         })}
       </div>
+
+      {/* School Categories */}
+      <div className="sec-t" style={{ color: "#751413", borderBottomColor: "#d4a84a", marginTop: 24 }}>School Categories</div>
+      <div className="card">
+        <p style={{ fontSize: 13, color: "#666", marginTop: 0 }}>
+          Define canonical school names. When applicants type different variations (e.g. "Ateneo", "ADMU"), you can tag them under one canonical name for accurate metrics.
+        </p>
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <label style={{ fontWeight: 600, fontSize: 12 }}>School Name</label>
+            <input style={{ ...inp, marginTop: 4 }} placeholder="e.g., Ateneo de Manila University" value={newSchoolName} onChange={(e) => setNewSchoolName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addSchoolCategory()} />
+          </div>
+          <button className="ab btn-g" onClick={addSchoolCategory}>Add School</button>
+        </div>
+        {schoolCats.length === 0 && <p style={{ fontSize: 12, color: "#999" }}>No school categories yet. Add one above.</p>}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {schoolCats.map((c) => (
+            <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, background: "#eff6ff", padding: "4px 10px", borderRadius: 16, border: "1px solid #bfdbfe" }}>
+              <span>{c.category_name}</span>
+              <button onClick={() => deleteCategory(c.id)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 11, padding: 0 }}>✕</button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-  );
+    );
+  };
 
   // ── Render: Metrics ──
   const renderMetrics = () => {
@@ -1271,6 +1367,26 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             {renderReasonBars(shiftReasons, 5)}
           </div>
         )}
+
+        {/* By School */}
+        {(isRegistrar || isAdmissions || isAcadAffairs) && (() => {
+          const schoolCounts: Record<string, number> = {};
+          metricSubs.forEach((s) => {
+            const d = s.data;
+            const school = d.school_tag || d.transfer_school || "";
+            if (school) schoolCounts[school] = (schoolCounts[school] || 0) + 1;
+          });
+          if (Object.keys(schoolCounts).length === 0) return null;
+          const maxS = Math.max(...Object.values(schoolCounts), 1);
+          const sorted = Object.entries(schoolCounts).sort((a, b) => b[1] - a[1]);
+          return (
+            <div className="card">
+              <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>By School (Transfer Destination)</h3>
+              <p style={{ margin: "0 0 12px", fontSize: 12, color: "#888" }}>Schools where students are transferring. Tagged names override raw entries.</p>
+              {sorted.map(([label, count], i) => bar(label, count, maxS, colors[(i + 3) % colors.length]))}
+            </div>
+          );
+        })()}
       </div>
     );
   };
@@ -1393,6 +1509,31 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               })}
             </tbody>
           </table>
+
+          {/* By School */}
+          {(() => {
+            const schoolCounts: Record<string, number> = {};
+            reportSubs.forEach((s) => {
+              const d = s.data;
+              const school = d.school_tag || d.transfer_school || "";
+              if (school) schoolCounts[school] = (schoolCounts[school] || 0) + 1;
+            });
+            const sorted = Object.entries(schoolCounts).sort((a, b) => b[1] - a[1]);
+            if (!sorted.length) return null;
+            return (
+              <>
+                <h4 style={{ fontSize: 14, margin: "16px 0 8px" }}>By School (Transfer Destination)</h4>
+                <table className="ct" style={{ marginBottom: 16 }}>
+                  <thead><tr><th>School</th><th style={{ textAlign: "right" }}>Count</th></tr></thead>
+                  <tbody>
+                    {sorted.map(([s, n]) => (
+                      <tr key={s}><td>{s}</td><td style={{ textAlign: "right", fontWeight: 600 }}>{n}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            );
+          })()}
 
           {/* All Submissions List */}
           <h4 style={{ fontSize: 14, margin: "16px 0 8px" }}>All Submissions</h4>
@@ -1519,6 +1660,159 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     );
   };
 
+  // ── Report to Registrar (Principal departments) ──
+  const [regCustomStatuses, setRegCustomStatuses] = useState<string[]>([]);
+  const BASE_REG_STATUSES = ["For Summer", "Notice of Transfer"];
+
+  const loadRegEntries = async () => {
+    const { data } = await supabase.from("submissions").select("*")
+      .eq("status", "draft")
+      .order("created_at", { ascending: true });
+    if (data) {
+      const mine = data.filter((r: any) => r.data?.report_type === "registrar_report" && r.data?.department === user.department);
+      setRegEntries(mine.map((r: any) => ({
+        id: r.id,
+        student_name: r.data.student_name || "",
+        level_section: r.data.level_section || "",
+        report_status: r.data.report_status || "",
+        remarks: r.data.report_remarks || "",
+      })));
+    }
+    setRegLoaded(true);
+  };
+
+  const addRegEntry = async () => {
+    const { data, error } = await supabase.from("submissions").insert({
+      data: { report_type: "registrar_report", department: user.department, student_name: "", level_section: "", report_status: "", report_remarks: "" },
+      status: "draft",
+    }).select().single();
+    if (error) { alert("Error: " + error.message); return; }
+    setRegEntries((p) => [...p, { id: data.id, student_name: "", level_section: "", report_status: "", remarks: "" }]);
+  };
+
+  const updateRegEntry = async (id: string, field: string, value: string) => {
+    setRegEntries((p) => p.map((e) => e.id === id ? { ...e, [field]: value } : e));
+    // Debounced save
+    const entry = regEntries.find((e) => e.id === id);
+    if (!entry) return;
+    const updated = { ...entry, [field]: value };
+    await supabase.from("submissions").update({
+      data: {
+        report_type: "registrar_report", department: user.department,
+        student_name: updated.student_name, level_section: updated.level_section,
+        report_status: updated.report_status, report_remarks: updated.remarks,
+      },
+    }).eq("id", id);
+  };
+
+  const deleteRegEntry = async (id: string) => {
+    if (!window.confirm("Remove this entry?")) return;
+    await supabase.from("submissions").delete().eq("id", id);
+    setRegEntries((p) => p.filter((e) => e.id !== id));
+  };
+
+  const sendToRegistrar = async () => {
+    const filled = regEntries.filter((e) => e.student_name.trim());
+    if (!filled.length) { alert("No entries to send."); return; }
+    // Fetch registrar email
+    const { data: regUsers } = await supabase.from("department_users").select("email").eq("department", "Registrar");
+    const emails = (regUsers || []).map((u: any) => u.email);
+    if (!emails.length) { alert("No Registrar email found."); return; }
+
+    let body = `Report from ${user.department} Department\n\n`;
+    body += "No. | Student Name | Level/Section | Status | Remarks\n";
+    body += "──────────────────────────────────────────────────\n";
+    filled.forEach((e, i) => {
+      body += `${i + 1}. ${e.student_name} | ${e.level_section} | ${e.report_status} | ${e.remarks}\n`;
+    });
+    body += `\nTotal: ${filled.length} student(s)\nDate: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Manila" })}`;
+
+    const subject = encodeURIComponent(`${user.department} Report to Registrar – ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Manila" })}`);
+    window.open(`mailto:${emails.join(",")}?subject=${subject}&body=${encodeURIComponent(body)}`, "_blank");
+  };
+
+  const renderReportToRegistrar = () => {
+    if (!regLoaded) loadRegEntries();
+    const allStatuses = [...BASE_REG_STATUSES, ...regCustomStatuses];
+    // Add any statuses from existing entries not already listed
+    regEntries.forEach((e) => {
+      if (e.report_status && !allStatuses.includes(e.report_status)) allStatuses.push(e.report_status);
+    });
+    return (
+      <div>
+        <div className="sec-t" style={{ color: "#751413", borderBottomColor: "#d4a84a" }}>Report to Registrar</div>
+        <div className="card">
+          <p style={{ fontSize: 13, color: "#666", marginTop: 0, marginBottom: 12 }}>
+            List students to report to the Registrar. Fill in the details below, then click "Send to Registrar" to notify them via email.
+          </p>
+
+          {/* Add custom status */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "flex-end", flexWrap: "wrap" }}>
+            <div style={{ minWidth: 200 }}>
+              <label style={{ fontWeight: 600, fontSize: 11, color: "#666" }}>Add Custom Status</label>
+              <input style={{ ...inp, marginTop: 2, fontSize: 12 }} placeholder="e.g., For Retention" value={regCustomStatus} onChange={(e) => setRegCustomStatus(e.target.value)} onKeyDown={(e) => {
+                if (e.key === "Enter" && regCustomStatus.trim()) {
+                  if (!allStatuses.includes(regCustomStatus.trim())) setRegCustomStatuses((p) => [...p, regCustomStatus.trim()]);
+                  setRegCustomStatus("");
+                }
+              }} />
+            </div>
+            <button className="ab" style={{ background: "#6b7280", color: "white", fontSize: 11, padding: "4px 10px" }} onClick={() => {
+              if (regCustomStatus.trim() && !allStatuses.includes(regCustomStatus.trim())) {
+                setRegCustomStatuses((p) => [...p, regCustomStatus.trim()]);
+              }
+              setRegCustomStatus("");
+            }}>Add Status</button>
+          </div>
+
+          {/* Table */}
+          <table className="ct">
+            <thead>
+              <tr>
+                <th style={{ width: 30 }}>#</th>
+                <th>Student Name</th>
+                <th>Level / Section</th>
+                <th>Status</th>
+                <th>Remarks</th>
+                <th style={{ width: 40 }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {regEntries.length === 0 && (
+                <tr><td colSpan={6} style={{ textAlign: "center", color: "#999", padding: 16 }}>No entries yet. Click "Add Entry" below.</td></tr>
+              )}
+              {regEntries.map((e, i) => (
+                <tr key={e.id}>
+                  <td style={{ textAlign: "center", fontWeight: 600, color: "#888" }}>{i + 1}</td>
+                  <td><input style={{ ...inp, border: "none", padding: "2px 4px", fontSize: 12 }} placeholder="Last Name, First Name" value={e.student_name} onChange={(ev) => updateRegEntry(e.id, "student_name", ev.target.value)} /></td>
+                  <td>
+                    <select style={{ ...inp, border: "none", padding: "2px 4px", fontSize: 12 }} value={e.level_section} onChange={(ev) => updateRegEntry(e.id, "level_section", ev.target.value)}>
+                      <option value="">Select...</option>
+                      {GRADE_OPTIONS.map((g) => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </td>
+                  <td>
+                    <select style={{ ...inp, border: "none", padding: "2px 4px", fontSize: 12 }} value={e.report_status} onChange={(ev) => updateRegEntry(e.id, "report_status", ev.target.value)}>
+                      <option value="">Select...</option>
+                      {allStatuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </td>
+                  <td><input style={{ ...inp, border: "none", padding: "2px 4px", fontSize: 12 }} placeholder="Remarks..." value={e.remarks} onChange={(ev) => updateRegEntry(e.id, "remarks", ev.target.value)} /></td>
+                  <td><button onClick={() => deleteRegEntry(e.id)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 14, padding: 0 }}>✕</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button className="ab btn-b" style={{ fontSize: 12 }} onClick={addRegEntry}>+ Add Entry</button>
+            <button className="ab btn-g" style={{ fontSize: 12 }} onClick={sendToRegistrar}>Send to Registrar</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) return <><style>{CSS}</style><div style={{ textAlign: "center", padding: 60, fontSize: 16 }}>Loading...</div></>;
 
   return (
@@ -1617,6 +1911,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <button className={`tab ${tab === "pending" ? "on" : ""}`} onClick={() => setTab("pending")}>Pending ({deptPending.length})</button>
               <button className={`tab ${tab === "reviewed" ? "on" : ""}`} onClick={() => setTab("reviewed")}>Reviewed ({deptReviewed.length})</button>
               <button className={`tab ${tab === "deptreport" ? "on" : ""}`} onClick={() => setTab("deptreport")}>Report</button>
+              {isPrincipal && <button className={`tab ${tab === "regreport" ? "on" : ""}`} onClick={() => setTab("regreport")}>Report to Registrar</button>}
             </div>
             {tab === "pending" && (
               <>
@@ -1633,6 +1928,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               </>
             )}
             {tab === "deptreport" && renderDeptReport()}
+            {tab === "regreport" && isPrincipal && renderReportToRegistrar()}
           </>
         )}
       </div>
