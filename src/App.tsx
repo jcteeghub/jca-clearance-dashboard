@@ -1813,6 +1813,98 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     );
   };
 
+  // ── Admin view: all principal reports to Registrar ──
+  const [adminRegDept, setAdminRegDept] = useState(PRINCIPALS[0]);
+  const [adminRegEntries, setAdminRegEntries] = useState<Record<string, { id: string; student_name: string; level_section: string; report_status: string; remarks: string }[]>>({});
+  const [adminRegLoaded, setAdminRegLoaded] = useState(false);
+
+  const loadAdminRegEntries = async () => {
+    const { data } = await supabase.from("submissions").select("*").eq("status", "draft").order("created_at", { ascending: true });
+    if (data) {
+      const grouped: Record<string, any[]> = {};
+      data.filter((r: any) => r.data?.report_type === "registrar_report").forEach((r: any) => {
+        const dept = r.data.department || "Unknown";
+        if (!grouped[dept]) grouped[dept] = [];
+        grouped[dept].push({
+          id: r.id,
+          student_name: r.data.student_name || "",
+          level_section: r.data.level_section || "",
+          report_status: r.data.report_status || "",
+          remarks: r.data.report_remarks || "",
+        });
+      });
+      setAdminRegEntries(grouped);
+    }
+    setAdminRegLoaded(true);
+  };
+
+  const renderAdminRegReport = () => {
+    if (!adminRegLoaded) loadAdminRegEntries();
+    const entries = adminRegEntries[adminRegDept] || [];
+    return (
+      <div>
+        <div className="sec-t" style={{ color: "#751413", borderBottomColor: "#d4a84a" }}>Report to Registrar — All Departments</div>
+        <div className="card">
+          <p style={{ fontSize: 13, color: "#666", marginTop: 0, marginBottom: 12 }}>
+            View reports submitted by principal departments. Select a department below.
+          </p>
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+            {PRINCIPALS.map((p) => {
+              const count = (adminRegEntries[p] || []).length;
+              return (
+                <button key={p} className={`ab ${adminRegDept === p ? "btn-b" : ""}`}
+                  style={adminRegDept === p ? { fontSize: 12 } : { fontSize: 12, background: "#f3f4f6", color: "#333", border: "1px solid #ccc" }}
+                  onClick={() => setAdminRegDept(p)}>
+                  {p} {count > 0 && <span style={{ background: adminRegDept === p ? "#fff" : "#751413", color: adminRegDept === p ? "#751413" : "#fff", borderRadius: 10, padding: "0 6px", fontSize: 10, marginLeft: 4 }}>{count}</span>}
+                </button>
+              );
+            })}
+            <button className="ab" style={{ fontSize: 11, background: "#6b7280", color: "white", padding: "4px 10px" }} onClick={loadAdminRegEntries}>↻ Refresh</button>
+          </div>
+
+          {entries.length === 0 ? (
+            <p style={{ color: "#999", fontSize: 13, textAlign: "center", padding: 20 }}>No entries from {adminRegDept} yet.</p>
+          ) : (
+            <table className="ct">
+              <thead>
+                <tr><th style={{ width: 30 }}>#</th><th>Student Name</th><th>Level / Section</th><th>Status</th><th>Remarks</th></tr>
+              </thead>
+              <tbody>
+                {entries.map((e, i) => (
+                  <tr key={e.id}>
+                    <td style={{ textAlign: "center" }}>{i + 1}</td>
+                    <td>{e.student_name || <span style={{ color: "#ccc" }}>—</span>}</td>
+                    <td>{e.level_section || "—"}</td>
+                    <td>{e.report_status ? <span className={`badge ${e.report_status === "Notice of Transfer" ? "b-pend" : e.report_status === "For Summer" ? "b-appr" : "b-comp"}`}>{e.report_status}</span> : "—"}</td>
+                    <td>{e.remarks || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {/* Summary across all departments */}
+          <div style={{ marginTop: 20, padding: 12, background: "#f9fafb", borderRadius: 6, border: "1px solid #e5e7eb" }}>
+            <strong style={{ fontSize: 13, color: "#555" }}>Summary — All Departments</strong>
+            <table className="ct" style={{ marginTop: 8 }}>
+              <thead><tr><th>Department</th><th style={{ textAlign: "right" }}>Entries</th></tr></thead>
+              <tbody>
+                {PRINCIPALS.map((p) => {
+                  const c = (adminRegEntries[p] || []).length;
+                  if (!c) return null;
+                  return <tr key={p}><td>{p}</td><td style={{ textAlign: "right", fontWeight: 600 }}>{c}</td></tr>;
+                })}
+                {PRINCIPALS.every((p) => !(adminRegEntries[p] || []).length) && (
+                  <tr><td colSpan={2} style={{ textAlign: "center", color: "#999" }}>No reports from any department yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) return <><style>{CSS}</style><div style={{ textAlign: "center", padding: 60, fontSize: 16 }}>Loading...</div></>;
 
   return (
@@ -1852,6 +1944,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               {(isRegistrar || isAdmissions) && <button className={`tab ${tab === "manual" ? "on" : ""}`} onClick={() => setTab("manual")}>Manual Entry</button>}
               {(isRegistrar || isAdmissions) && <button className={`tab ${tab === "categories" ? "on" : ""}`} onClick={() => setTab("categories")}>Categories</button>}
               {(isRegistrar || isAdmissions) && <button className={`tab ${tab === "report" ? "on" : ""}`} onClick={() => setTab("report")}>Report</button>}
+              {isSuperAdmin && <button className={`tab ${tab === "regreport" ? "on" : ""}`} onClick={() => setTab("regreport")}>Report to Registrar</button>}
               {isSuperAdmin && <button className={`tab ${tab === "accounts" ? "on" : ""}`} onClick={() => setTab("accounts")}>Manage Accounts</button>}
             </div>
 
@@ -1900,6 +1993,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             {tab === "manual" && (isRegistrar || isAdmissions) && renderManualEntry()}
             {tab === "categories" && (isRegistrar || isAdmissions) && renderCategories()}
             {tab === "report" && (isRegistrar || isAdmissions) && renderReport()}
+            {tab === "regreport" && isSuperAdmin && renderAdminRegReport()}
             {tab === "accounts" && isSuperAdmin && renderManageAccounts()}
           </>
         )}
