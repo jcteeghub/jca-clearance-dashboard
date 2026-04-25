@@ -238,7 +238,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const deptReviewed = deptSubs.filter((s) => { const c = myClr(s.id); return c && c.status !== "pending"; });
 
   // For admin (Registrar / Admissions)
-  const adminPending = roleSubs.filter((s) => { const c = getClrs(s.id); return s.status === "pending" && c.some((x) => x.status === "pending") && !c.some((x) => x.status === "disapproved"); });
+  const adminPending = roleSubs.filter((s) => { const c = getClrs(s.id); return s.status === "pending" && (c.length === 0 || (c.some((x) => x.status === "pending") && !c.some((x) => x.status === "disapproved"))); });
   const adminDisapproved = roleSubs.filter((s) => { const c = getClrs(s.id); return s.status === "pending" && c.some((x) => x.status === "disapproved"); });
   const adminApproved = roleSubs.filter((s) => { const c = getClrs(s.id); return s.status === "pending" && c.length > 0 && c.every((x) => x.status === "approved"); });
   const adminCompleted = roleSubs.filter((s) => s.status === "completed");
