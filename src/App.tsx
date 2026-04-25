@@ -1867,7 +1867,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           ) : (
             <table className="ct">
               <thead>
-                <tr><th style={{ width: 30 }}>#</th><th>Student Name</th><th>Level / Section</th><th>Status</th><th>Remarks</th></tr>
+                <tr><th style={{ width: 30 }}>#</th><th>Student Name</th><th>Level / Section</th><th>Status</th><th>Remarks</th><th style={{ width: 40 }}></th></tr>
               </thead>
               <tbody>
                 {entries.map((e, i) => (
@@ -1877,6 +1877,16 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                     <td>{e.level_section || "—"}</td>
                     <td>{e.report_status ? <span className={`badge ${e.report_status === "Notice of Transfer" ? "b-pend" : e.report_status === "For Summer" ? "b-appr" : "b-comp"}`}>{e.report_status}</span> : "—"}</td>
                     <td>{e.remarks || "—"}</td>
+                    <td>
+                      <button onClick={async () => {
+                        if (!window.confirm("Delete this entry?")) return;
+                        await supabase.from("submissions").delete().eq("id", e.id);
+                        setAdminRegEntries((prev) => ({
+                          ...prev,
+                          [adminRegDept]: (prev[adminRegDept] || []).filter((x) => x.id !== e.id),
+                        }));
+                      }} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 14, padding: 0 }}>✕</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1900,6 +1910,39 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               </tbody>
             </table>
           </div>
+
+          {/* Schools to Transfer — from actual clearance submissions */}
+          {(() => {
+            const activeSubs = subs.filter((s) => s.status !== "did_not_push_through" && !s.data?.report_type);
+            const schoolCounts: Record<string, number> = {};
+            activeSubs.forEach((s) => {
+              const school = s.data?.school_tag || s.data?.transfer_school || "";
+              if (school) schoolCounts[school] = (schoolCounts[school] || 0) + 1;
+            });
+            const sorted = Object.entries(schoolCounts).sort((a, b) => b[1] - a[1]);
+            if (!sorted.length) return null;
+            const colors = ["#2563eb", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16", "#06b6d4", "#e11d48", "#a855f7", "#0ea5e9", "#d946ef"];
+            const maxS = Math.max(...sorted.map(([, n]) => n), 1);
+            return (
+              <div style={{ marginTop: 20, padding: 12, background: "#eff6ff", borderRadius: 6, border: "1px solid #bfdbfe" }}>
+                <strong style={{ fontSize: 13, color: "#1e40af" }}>Schools to Transfer — Metrics</strong>
+                <p style={{ fontSize: 11, color: "#666", margin: "2px 0 10px" }}>Breakdown of schools where students are transferring (from all clearance submissions). Tagged names override raw entries.</p>
+                {sorted.map(([school, count], i) => (
+                  <div key={school} style={{ marginBottom: 6 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 2 }}>
+                      <span>{school}</span><span style={{ fontWeight: 600 }}>{count}</span>
+                    </div>
+                    <div style={{ background: "#e5e7eb", borderRadius: 4, overflow: "hidden" }}>
+                      <div className="mbar" style={{ width: `${(count / maxS) * 100}%`, background: colors[i % colors.length], minWidth: count > 0 ? 16 : 0 }} />
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop: 8, fontSize: 12, color: "#555", fontWeight: 600, textAlign: "right" }}>
+                  Total: {sorted.reduce((s, [, n]) => s + n, 0)} student(s) with school indicated
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     );
