@@ -1538,7 +1538,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {/* All Submissions List */}
           <h4 style={{ fontSize: 14, margin: "16px 0 8px" }}>All Submissions</h4>
           <table className="ct">
-            <thead><tr><th>Ref #</th><th>Name</th><th>Grade</th><th>Type</th><th>Date Filed</th><th>Status</th></tr></thead>
+            <thead><tr><th>Ref #</th><th>Name</th><th>Grade</th><th>Type</th><th>Date Filed</th><th>Status</th>{isSuperAdmin && <th></th>}</tr></thead>
             <tbody>
               {applySorting(reportSubs).map((s) => (
                 <tr key={s.id}>
@@ -1548,6 +1548,11 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                   <td>{s.data?.application_type}</td>
                   <td>{s.data?.date_filed}</td>
                   <td><span className={`badge ${badgeClass(s.status)}`}>{s.status}</span></td>
+                  {isSuperAdmin && (
+                    <td>
+                      <button onClick={() => handleDelete(s.id)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 13, padding: "0 4px" }} title="Delete entry">✕</button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
