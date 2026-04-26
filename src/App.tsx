@@ -507,17 +507,25 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   // ── Render: Personal Details ──
   const renderDetails = (d: Record<string, any>) => (
-    <div className="dg">
-      {d.ref_number && <><span className="dl">Ref #:</span><span className="dv" style={{ fontWeight: 700, color: "#1e3a8a", letterSpacing: 1 }}>{d.ref_number}</span></>}
-      <span className="dl">Name:</span>
-      <span className="dv">{d.last_name}, {d.first_name} {d.middle_name || ""}</span>
-      <span className="dl">Grade / Level:</span><span className="dv">{d.grade}</span>
-      {d.email && <><span className="dl">Email:</span><span className="dv">{d.email}</span></>}
-      {d.phone && <><span className="dl">Phone:</span><span className="dv">{d.phone}</span></>}
-      <span className="dl">Application:</span><span className="dv">{d.application_type}{d.manual_entry ? " (Manual)" : ""}</span>
-      <span className="dl">Date Filed:</span><span className="dv">{d.date_filed}</span>
-      <span className="dl">School Year:</span><span className="dv">{d.school_year}</span>
-      {d.transfer_school && <><span className="dl">Transfer To:</span><span className="dv">{d.transfer_school} ({d.transfer_location})</span></>}
+    <div>
+      <div className="dg">
+        {d.ref_number && <><span className="dl">Ref #:</span><span className="dv" style={{ fontWeight: 700, color: "#1e3a8a", letterSpacing: 1 }}>{d.ref_number}</span></>}
+        <span className="dl">Name:</span>
+        <span className="dv">{d.last_name}, {d.first_name} {d.middle_name || ""}</span>
+        <span className="dl">Grade / Level:</span><span className="dv">{d.grade}</span>
+        {d.email && <><span className="dl">Email:</span><span className="dv">{d.email}</span></>}
+        {d.phone && <><span className="dl">Phone:</span><span className="dv">{d.phone}</span></>}
+        <span className="dl">Application:</span><span className="dv">{d.application_type}{d.manual_entry ? " (Manual)" : ""}</span>
+        <span className="dl">Date Filed:</span><span className="dv">{d.date_filed}</span>
+        <span className="dl">School Year:</span><span className="dv">{d.school_year}</span>
+        {d.transfer_school && <><span className="dl">Transfer To:</span><span className="dv">{d.transfer_school} ({d.transfer_location})</span></>}
+      </div>
+      {d.signature && (
+        <div style={{ marginBottom: 12, padding: 10, background: "#f9fafb", borderRadius: 6, border: "1px solid #e5e7eb" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#555", marginBottom: 6 }}>Signature of Parent / Guardian:</div>
+          <img src={d.signature} alt="Parent Signature" style={{ maxWidth: 300, height: "auto", border: "1px solid #ddd", borderRadius: 4, background: "#fff", display: "block" }} />
+        </div>
+      )}
     </div>
   );
 
